@@ -1,4 +1,4 @@
-# mobile_lab_3
+# Hedieaty Application
 
 A new Flutter project.
 
