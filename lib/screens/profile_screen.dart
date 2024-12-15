@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this if storing phone in Firestore
 import 'package:mobile_lab_3/controllers/event_controller.dart';
 import 'package:mobile_lab_3/layouts/custom_title.dart';
 import 'package:mobile_lab_3/layouts/event_card.dart';
@@ -14,19 +15,36 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   User? currentUser = FirebaseAuth.instance.currentUser;
   final EventController _eventController = EventController();
-  bool _isEditingName = false; // To toggle between text and text field
+  bool _isEditingName = false; // For name editing
+  bool _isEditingPhone = false; // For phone editing
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: currentUser?.displayName ?? "");
+    _phoneController = TextEditingController();
+    _fetchPhoneNumber();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  // Function to fetch phone number from Firestore
+  Future<void> _fetchPhoneNumber() async {
+    if (currentUser != null) {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).get();
+      if (doc.exists) {
+        setState(() {
+          _phoneController.text = doc.data()?['phone'] ?? ''; // Fetch the phone field
+        });
+      }
+    }
   }
 
   // Function to handle logout
@@ -42,37 +60,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Function to update the display name in Firebase
-  void _saveDisplayName() async {
-      try {
-        if (_nameController.text.isNotEmpty) {
-          // Update the display name in Firebase
-          await FirebaseAuth.instance.currentUser?.updateDisplayName(_nameController.text);
-
-          // Reload the user to fetch the updated data
-          await FirebaseAuth.instance.currentUser?.reload();
-
-          // Fetch the updated user instance
-          final updatedUser = FirebaseAuth.instance.currentUser;
-
-          // Update the state with the new display name
-          setState(() {
-            currentUser = updatedUser;
-            _isEditingName = false; // Exit editing mode
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Name updated successfully!')),
-          );
-        }
-      } catch (e) {
+  Future<void> _saveDisplayName() async {
+    try {
+      if (_nameController.text.isNotEmpty) {
+        await FirebaseAuth.instance.currentUser?.updateDisplayName(_nameController.text);
+        await FirebaseAuth.instance.currentUser?.reload();
+        setState(() {
+          currentUser = FirebaseAuth.instance.currentUser;
+          _isEditingName = false; // Exit editing mode
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update name: $e')),
+          SnackBar(content: Text('Name updated successfully!')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update name: $e')),
+      );
     }
+  }
 
+  // Function to update the phone number in Firestore
+  Future<void> _savePhoneNumber() async {
+    try {
+      if (_phoneController.text.isNotEmpty && currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.uid)
+            .update({'phone': _phoneController.text});
+        setState(() {
+          _isEditingPhone = false; // Exit editing mode
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Phone number updated successfully!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update phone number: $e')),
+      );
+    }
+  }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomTitle(),
@@ -86,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 50, // Increase the size of the CircleAvatar
+                      radius: 50,
                       backgroundColor: Color(0xFFFFD700).withOpacity(0.4),
                       child: Text(
                         currentUser?.displayName != null && currentUser!.displayName!.isNotEmpty
@@ -117,15 +147,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         SizedBox(width: 8),
                         IconButton(
                           icon: const Icon(Icons.check, color: Colors.green),
-                          onPressed: _saveDisplayName, // Save changes and close editing
+                          onPressed: _saveDisplayName,
                         ),
                         IconButton(
                           icon: const Icon(Icons.close, color: Colors.red),
                           onPressed: () {
                             setState(() {
-                              _isEditingName = false; // Cancel editing
+                              _isEditingName = false;
                             });
-                          },),
+                          },
+                        ),
                       ],
                     )
                         : Row(
@@ -143,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         IconButton(
                           onPressed: () {
                             setState(() {
-                              _isEditingName = true; // Enable editing mode
+                              _isEditingName = true;
                             });
                           },
                           icon: Icon(Icons.edit),
@@ -152,7 +183,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                     SizedBox(height: 8),
-                    // Logout Button
+                    _isEditingPhone
+                        ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Phone Number',
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.check, color: Colors.green),
+                          onPressed: _savePhoneNumber,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _isEditingPhone = false;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Phone: ",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Aclonica',
+                            color: Color(0xFFDB2367)
+                          ),
+                        ),
+                        Text(
+                          _phoneController.text.isNotEmpty ? _phoneController.text : "No Phone",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Aclonica',
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _isEditingPhone = true;
+                            });
+                          },
+                          icon: Icon(Icons.edit),
+                          color: Color(0xFFDB2367),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
                     TextButton(
                       onPressed: _logout,
                       child: Text(
@@ -204,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onDelete: () async {
                               await _eventController.deleteEvent(event.id!);
                               setState(() {
-                                events.remove(event); // Update the list dynamically
+                                events.remove(event);
                               });
                             },
                             onUpdate: (updatedData) {},

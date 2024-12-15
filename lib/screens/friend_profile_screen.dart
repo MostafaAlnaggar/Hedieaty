@@ -30,25 +30,56 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.grey[300],
-                      child: Icon(Icons.person, size: 50, color: Colors.white),
+                      radius: 50,
+                      backgroundColor: Color(0xFFFFD700).withOpacity(0.4),
+                      child: Text(
+                        "M",
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Aclonica',
+                          color: Color(0xFFDB2367),
+                        ),
+                      ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 16),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Mostafa Essam",
+                          "user2",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Aclonica',
                           ),
                         ),
-                        SizedBox(width: 8),
                       ],
                     ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Phone: ",
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Aclonica',
+                              color: Color(0xFFDB2367)
+                          ),
+                        ),
+                        Text(
+                          "01010834903",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Aclonica',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16)
                   ],
                 ),
               ),
