@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_lab_3/screens/login_screen.dart';
@@ -126,7 +127,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             child: Text(
                               "SIGN-UP",
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFFDB2367),
                                 fontFamily: "Aclonica",
                               ),
                             ),
@@ -222,20 +223,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
           password: _passwordController.text.trim(),
         );
 
-        // Set additional user details
+        // Get the authenticated user
         User? user = userCredential.user;
+
         if (user != null) {
+          // Update the display name in Firebase Authentication
           await user.updateDisplayName(_nameController.text.trim());
-          // await user.updatePhoneNumber(_phoneController.text.trim());
-          // Save phone number using custom claims or Firestore (if required)
-          await user.reload(); // Ensure changes are reflected in the current session
+          await user.reload();
+
+          // Save additional user details in Firestore
+          await FirebaseFirestore.instance
+              .collection('users') // Firestore collection name
+              .doc(user.uid) // Use the UID as the document ID
+              .set({
+            'uid': user.uid, // Firebase Authentication UID
+            'name': _nameController.text.trim(),
+            'email': user.email, // Email from Authentication
+            'phone': _phoneController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(), // Timestamp of creation
+          });
+
+          // Notify the user of successful sign-up
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Sign-Up successful!")),
+          );
+
+          // Navigate back to the login screen
+          Navigator.pop(context);
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Sign-Up successful!")),
-        );
-
-        Navigator.pop(context); // Go back to the previous screen (e.g., Login)
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message ?? "Sign-Up failed")),
@@ -247,4 +262,5 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     }
   }
+
 }
