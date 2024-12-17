@@ -100,6 +100,12 @@ class _GiftDetailsScreenState extends State<GiftDetailsScreen> {
   }
 
   void _deleteGift() async {
+    if(gift.isPledged){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pledged Gifts can\'t be deleted')),
+      );
+      return;
+    }
     await _giftController.deleteGift(gift.id!);
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -157,6 +163,7 @@ class _GiftDetailsScreenState extends State<GiftDetailsScreen> {
               onEdit: _toggleEditTitle,
               controller: _titleController,
               isEditing: _isEditingTitle,
+              isPledged: gift.isPledged,
             ),
             SizedBox(height: 8),
             DetailRow(
@@ -165,6 +172,7 @@ class _GiftDetailsScreenState extends State<GiftDetailsScreen> {
               onEdit: _toggleEditDescription,
               controller: _descriptionController,
               isEditing: _isEditingDescription,
+              isPledged: gift.isPledged,
             ),
             SizedBox(height: 8),
             DetailRow(
@@ -173,6 +181,7 @@ class _GiftDetailsScreenState extends State<GiftDetailsScreen> {
               onEdit: _toggleEditPrice,
               controller: _priceController,
               isEditing: _isEditingPrice,
+              isPledged: gift.isPledged
             ),
             SizedBox(height: 8),
             DetailRow(
@@ -181,6 +190,7 @@ class _GiftDetailsScreenState extends State<GiftDetailsScreen> {
               onEdit: _toggleEditCategory,
               controller: _categoryController,
               isEditing: _isEditingCategory,
+              isPledged: gift.isPledged,
             ),
             Spacer(),
             Row(
@@ -237,6 +247,7 @@ class DetailRow extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onEdit;
   final bool isEditing;
+  final bool isPledged;
 
   const DetailRow({
     required this.title,
@@ -244,6 +255,7 @@ class DetailRow extends StatefulWidget {
     required this.onEdit,
     required this.controller,
     required this.isEditing,
+    required this.isPledged,
     Key? key,
   }) : super(key: key);
 
@@ -264,6 +276,12 @@ class _DetailRowState extends State<DetailRow> {
   }
 
   void _toggleEditing() {
+    if(widget.isPledged){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pledged Gifts can\'t be edited')),
+      );
+      return;
+    }
     setState(() {
       isEditing = !isEditing;
     });

@@ -18,6 +18,12 @@ class _GiftsScreenState extends State<GiftsScreen> {
   String eventName = "";
 
   @override
+  void initState(){
+    super.initState();
+    _loadGifts();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
@@ -28,15 +34,14 @@ class _GiftsScreenState extends State<GiftsScreen> {
         eventId = args['eventId'] as int;
         eventName = args["eventName"] as String;
       });
-      _loadGifts();
+      // _loadGifts();
     } else {
-      _loadGifts(); // Load all gifts if no eventId is passed
+      // _loadGifts(); // Load all gifts if no eventId is passed
     }
   }
 
   Future<void> _loadGifts() async {
     List<Gift> gifts;
-
     if (eventId == -1) {
       gifts = await _controller.getAllGifts();
     } else {
@@ -63,6 +68,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
           break;
         case "Sort by Event":
           _gifts.sort((a, b) => a.eventId.compareTo(b.eventId));
+          break;
+        case "Sort by Status":
+          _gifts.sort((a, b) => a.isPledged ? 1 : 0.compareTo(b.isPledged ? 1 : 0));
           break;
       }
     });
@@ -133,7 +141,8 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     "Sort by Name",
                     "Sort by Category",
                     "Sort by Price",
-                    "Sort by Event"
+                    "Sort by Event",
+                    "Sort by Status"
                   ]
                       .map(
                         (String value) => DropdownMenuItem<String>(
