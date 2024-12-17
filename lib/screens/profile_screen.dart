@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this if storing phone in Firestore
 import 'package:mobile_lab_3/controllers/event_controller.dart';
+import 'package:mobile_lab_3/controllers/user_controller.dart';
 import 'package:mobile_lab_3/layouts/custom_title.dart';
 import 'package:mobile_lab_3/layouts/event_card.dart';
 import 'package:mobile_lab_3/layouts/navbar.dart';
 import 'package:mobile_lab_3/models/event.dart';
+
+import '../models/user.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -13,19 +14,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  User? currentUser = FirebaseAuth.instance.currentUser;
+  UserModel? currentUser;
   final EventController _eventController = EventController();
   bool _isEditingName = false; // For name editing
   bool _isEditingPhone = false; // For phone editing
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  UserController userController = UserController();
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: currentUser?.displayName ?? "");
-    _phoneController = TextEditingController();
-    _fetchPhoneNumber();
+    _nameController = TextEditingController(text: "Loading...");
+    _phoneController = TextEditingController(text: "Loading...");
+    _initialize();
   }
 
   @override
@@ -35,26 +37,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // Function to fetch phone number from Firestore
-  Future<void> _fetchPhoneNumber() async {
-    if (currentUser != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).get();
-      if (doc.exists) {
-        setState(() {
-          _phoneController.text = doc.data()?['phone'] ?? ''; // Fetch the phone field
-        });
-      }
+  Future<void> _initialize() async {
+    UserModel? new_currentUser = await userController.getCurrentUser();
+    if (new_currentUser != null) {
+      setState(() {
+        currentUser = new_currentUser;
+        _nameController.text = new_currentUser.name ?? "No Name";
+        _phoneController.text = new_currentUser.phone ?? "No Phone";
+      });
+    } else {
+      setState(() {
+        _nameController.text = "No Name";
+        _phoneController.text = "No Phone";
+      });
     }
   }
 
   // Function to handle logout
   Future<void> _logout() async {
-    try {
-      await FirebaseAuth.instance.signOut();
+    if (await userController.logout()){
       Navigator.pushNamed(context, '/login');
-    } catch (e) {
+    }
+    else
+    {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logout failed: $e')),
+        SnackBar(content: Text('Logout failed:')),
       );
     }
   }
@@ -62,11 +69,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Function to update the display name in Firebase
   Future<void> _saveDisplayName() async {
     try {
-      if (_nameController.text.isNotEmpty) {
-        await FirebaseAuth.instance.currentUser?.updateDisplayName(_nameController.text);
-        await FirebaseAuth.instance.currentUser?.reload();
+      if (_nameController.text.isNotEmpty && currentUser != null) {
+        await userController.setName(currentUser!.uid,_nameController.text);
+
+        UserModel? updatedUser = await userController.getCurrentUser();
+
         setState(() {
-          currentUser = FirebaseAuth.instance.currentUser;
+          currentUser = updatedUser;
           _isEditingName = false; // Exit editing mode
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -82,24 +91,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Function to update the phone number in Firestore
   Future<void> _savePhoneNumber() async {
-    try {
       if (_phoneController.text.isNotEmpty && currentUser != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser!.uid)
-            .update({'phone': _phoneController.text});
-        setState(() {
-          _isEditingPhone = false; // Exit editing mode
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Phone number updated successfully!')),
-        );
+        if (await userController.setPhoneNumber(currentUser!.uid, _phoneController.text)) {
+          setState(() {
+            _isEditingPhone = false; // Exit editing mode
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Phone number updated successfully!')),
+          );
+        }
+        else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update phone number'))
+          );
+        }
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update phone number: $e')),
-      );
-    }
   }
 
   @override
@@ -119,8 +125,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       radius: 50,
                       backgroundColor: Color(0xFFFFD700).withOpacity(0.4),
                       child: Text(
-                        currentUser?.displayName != null && currentUser!.displayName!.isNotEmpty
-                            ? currentUser!.displayName![0]
+                        currentUser?.name != null && currentUser!.name!.isNotEmpty
+                            ? currentUser!.name![0]
                             : "?",
                         style: TextStyle(
                           fontSize: 40,
@@ -154,6 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: () {
                             setState(() {
                               _isEditingName = false;
+                              _nameController.text = currentUser?.name ?? "No Name";
                             });
                           },
                         ),
@@ -163,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          currentUser?.displayName ?? "No Name",
+                          _nameController.text ?? "No Name",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -207,6 +214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: () {
                             setState(() {
                               _isEditingPhone = false;
+                              _phoneController.text = currentUser?.phone ?? "No Phone";
                             });
                           },
                         ),

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_lab_3/screens/login_screen.dart';
 
+import '../controllers/user_controller.dart';
+import '../models/user.dart';
+
 class SignUpScreen extends StatefulWidget {
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
@@ -113,7 +116,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           _isLoading
                               ? CircularProgressIndicator()
                               : ElevatedButton(
-                            onPressed: _handleSignUp,
+                              onPressed: () {
+                                // Validate inputs (name, email, phone, password)
+                                if (_formKey.currentState!.validate()) {
+                                  // Call the handleSignUp function
+                                  _handleSignUp(
+                                    context,
+                                    _nameController.text,
+                                    _emailController.text,
+                                    _phoneController.text,
+                                    _passwordController.text,
+                                  );
+                                }
+                              },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFFFFD700), // Yellow color
                               padding: const EdgeInsets.symmetric(
@@ -202,65 +217,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Future<void> _handleSignUp() async {
-    if (_formKey.currentState!.validate()) {
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Passwords do not match")),
-        );
-        return;
-      }
+  void _handleSignUp(BuildContext context, String name, String email, String phone, String password) async {
+    // Create a UserModel instance
+    UserModel user = UserModel(
+      uid: '', // Placeholder; this will be populated in Firestore after signup
+      name: name,
+      email: email,
+      phone: phone,
+    );
 
-      setState(() {
-        _isLoading = true;
-      });
+    // Instantiate the UserController
+    UserController userController = UserController();
 
-      try {
-        // Create a new user with email and password
-        UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+    // Call the signUp function
+    String? result = await userController.signUp(user, password);
 
-        // Get the authenticated user
-        User? user = userCredential.user;
-
-        if (user != null) {
-          // Update the display name in Firebase Authentication
-          await user.updateDisplayName(_nameController.text.trim());
-          await user.reload();
-
-          // Save additional user details in Firestore
-          await FirebaseFirestore.instance
-              .collection('users') // Firestore collection name
-              .doc(user.uid) // Use the UID as the document ID
-              .set({
-            'uid': user.uid, // Firebase Authentication UID
-            'name': _nameController.text.trim(),
-            'email': user.email, // Email from Authentication
-            'phone': _phoneController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(), // Timestamp of creation
-          });
-
-          // Notify the user of successful sign-up
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Sign-Up successful!")),
-          );
-
-          // Navigate back to the login screen
-          Navigator.pop(context);
-        }
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Sign-Up failed")),
-        );
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    // Handle the result
+    if (result == null) {
+      // Signup successful
+      Navigator.pushNamed(context, '/home'); // Navigate to the home screen
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result)),
+      );
     }
   }
+
+
 
 }
