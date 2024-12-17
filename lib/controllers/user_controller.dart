@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../database/user_dao.dart';
+import '../models/event.dart';
 import '../models/user.dart';
 
 class UserController {
@@ -61,6 +63,7 @@ class UserController {
     }
   }
 
+
   // Get current user
   Future<UserModel?> getCurrentUser() async {
     try {
@@ -81,6 +84,7 @@ class UserController {
     }
   }
 
+
   Future<bool> logout() async{
     try {
       await FirebaseAuth.instance.signOut();
@@ -90,11 +94,13 @@ class UserController {
     }
   }
 
+
   Future<bool> setName(String uid,String name) async{
     print("Controller");
 
     return _dao.setName(uid, name);
   }
+
 
   Future<bool> setPhoneNumber(String uid, String phone){
     return _dao.setPhoneNumber(uid, phone);
@@ -151,6 +157,7 @@ class UserController {
     }
   }
 
+
   Future<List<UserModel>> fetchFriends() async {
     final firestore = FirebaseFirestore.instance;
 
@@ -197,6 +204,50 @@ class UserController {
     }
 
     return friendsList; // List of UserModel objects
+  }
+
+  // Fetch events for a user by their userId
+  Future<List<Event>> fetchUserEvents(String userId) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Query Firestore to get the events where userId matches
+      final querySnapshot = await firestore
+          .collection('events')
+          .where('createdBy', isEqualTo: userId) // Adjust field name if needed
+          .get();
+
+      // Map the fetched data to a list of EventModel
+      List<Event> eventsList = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return Event.fromFirestore(data);
+      }).toList();
+
+      return eventsList; // Return the list of events
+    } catch (e) {
+      print("Error fetching user events: ${e.toString()}");
+      return []; // Return an empty list in case of error
+    }
+  }
+
+  Future<int> fetchUserUpcomingEventsLength(String userId) async {
+    // Fetch the user's events
+    List<Event> myList = await fetchUserEvents(userId);
+
+    // Get the current date
+    DateTime currentDate = DateTime.now();
+
+    // Filter upcoming events only
+    List<Event> upcomingEvents = myList.where((event) {
+      // Parse the event's date from String to DateTime
+      DateTime eventDate = DateFormat('yyyy-MM-dd').parse(event.date); // Assuming the event date is in 'yyyy-MM-dd' format
+
+      // Check if the event is in the future
+      return eventDate.isAfter(currentDate);
+    }).toList();
+
+    // Return the count of upcoming events
+    return upcomingEvents.length;
   }
 
 }

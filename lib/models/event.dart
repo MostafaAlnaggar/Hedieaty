@@ -24,6 +24,17 @@ class Event {
     };
   }
 
+  // From Firestore data
+  factory Event.fromFirestore(Map<String, dynamic> data) {
+    return Event(
+      id: data['id'],
+      title: data['title'] ?? '',
+      date: (data['date']),
+      userId: data['createdBy'] ?? '',
+      category: data['category'],
+    );
+  }
+
   // Create Event from Map (useful for reading from DB)
   static Event fromMap(Map<String, dynamic> map) {
     return Event(
@@ -31,7 +42,7 @@ class Event {
       title: map['title'],
       category: map['category'],
       date: map['date'],
-      userId: map['userId'], // Map userId
+      userId: map['userId']
     );
   }
 }

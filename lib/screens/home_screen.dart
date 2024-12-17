@@ -19,7 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _friendsFuture = _userController.fetchFriends();
-
   }
 
   Future<void> _addNewFriend() async {
@@ -221,11 +220,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Center(child: Text('No friends found.'));
                 } else {
                   final friends = snapshot.data!;
+
                   return Expanded(
                     child: ListView.builder(
                       itemCount: friends.length,
                       itemBuilder: (context, index) {
-                        return _buildFriendCard(context, friends[index]);
+                        return FutureBuilder<int>(
+                          future: _userController.fetchUserUpcomingEventsLength(friends[index].uid), // Fetch the events length asynchronously
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              // Show loading indicator while the data is being fetched
+                              return _buildFriendCard(context, friends[index], '..');
+                            } else if (snapshot.hasError) {
+                              // Handle error
+                              return _buildFriendCard(context, friends[index], '!');
+                            } else if (snapshot.hasData) {
+                              // When the data is fetched successfully
+                              return _buildFriendCard(context, friends[index], snapshot.data.toString());
+                            } else {
+                              // In case there's no data
+                              return _buildFriendCard(context, friends[index], '0');
+                            }
+                          },
+                        );
                       },
                     ),
                   );
@@ -239,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFriendCard(BuildContext context, UserModel friend) {
+  Widget _buildFriendCard(BuildContext context, UserModel friend, String count) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
@@ -264,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
         trailing: CircleAvatar(
           backgroundColor: Color(0xFFDB2367),
           child: Text(
-            '1', // Example count, you can replace with actual data
+            count,
             style: TextStyle(
               fontFamily: 'Aclonica',
               color: Colors.white,
