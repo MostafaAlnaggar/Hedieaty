@@ -21,7 +21,12 @@ class CustomNavBar extends StatelessWidget {
         onTap: (index) {
           // Handle navigation logic
           if (index == 0) {
-            Navigator.pushNamed(context, '/gifts');
+            Navigator.pushNamed(
+              context,
+              '/gifts',
+              arguments: {'eventId': -1},
+            );
+
           } else if (index == 1) {
             Navigator.pushNamed(context, '/donations');
           } else if (index == 2) {

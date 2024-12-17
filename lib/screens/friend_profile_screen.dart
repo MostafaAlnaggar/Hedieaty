@@ -111,6 +111,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                         itemBuilder: (context, index) {
                           final event = events[index];
                           return EventCard(
+                            eventId: event.id,
                             title: event.title,
                             category: event.category,
                             date: event.date,

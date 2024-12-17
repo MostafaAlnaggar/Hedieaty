@@ -34,4 +34,17 @@ class GiftDAO {
     // Ensure the result is converted to a List<Event>
     return result.map((map) => Gift.fromMap(map)).toList();
   }
+
+  Future<List<Gift>> getGiftsByEventId(int eventId) async {
+    final db = await dbHelper.database;
+    final result = await db.query(
+        'gifts',
+        where: 'event_id = ?', // Filtering by event_id
+        whereArgs: [eventId]    // Pass the eventId as an argument
+    );
+
+    // Convert the result to a List<Gift>
+    return result.map((map) => Gift.fromMap(map)).toList();
+  }
+
 }

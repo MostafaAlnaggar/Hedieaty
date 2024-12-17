@@ -155,6 +155,7 @@ class _EventsScreenState extends State<EventsScreen> {
                 itemBuilder: (context, index) {
                   final event = _events[index];
                   return EventCard(
+                    eventId: event.id,
                     title: event.title,
                     category: event.category,
                     date: event.date,

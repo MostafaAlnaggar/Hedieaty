@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_lab_3/controllers/event_controller.dart';
 import 'package:mobile_lab_3/controllers/user_controller.dart';
@@ -107,6 +108,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
   }
+
+  Future<void> _publishToFirebase() async {
+    if (currentUser != null) {
+      int result = await _eventController.publishEventsToFirebase(
+          currentUser!.uid);
+      if (result == -1){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error publishing events')),
+        );
+      }
+      else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${result} new events published.')),
+        );
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -268,6 +287,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
+                    SizedBox(height: 16),
+                    // Publish Button
+                    ElevatedButton.icon(
+                      onPressed: _publishToFirebase,
+                      icon: Icon(Icons.cloud_upload, color: Colors.white),
+                      label: Text(
+                        'Publish Events',
+                        style: TextStyle(
+                          fontFamily: 'Aclonica',
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFDB2367),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -297,6 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         ...events.map((event) {
                           return EventCard(
+                            eventId: event.id,
                             title: event.title,
                             category: event.category,
                             date: event.date,
