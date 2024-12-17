@@ -1,85 +1,126 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_lab_3/controllers/user_controller.dart';
 import 'package:mobile_lab_3/layouts/navbar.dart';
+import 'package:mobile_lab_3/models/user.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _friendController = TextEditingController();
+  late Future<List<UserModel>> _friendsFuture;
+  UserController _userController = UserController();
+
+  @override
+  void initState() {
+    super.initState();
+    _friendsFuture = _userController.fetchFriends();
+
+  }
+
+  Future<void> _addNewFriend() async {
+    final phoneNumber = _friendController.text;
+    if (phoneNumber.isNotEmpty) {
+      String addFriend = await _userController.addFriend(phoneNumber);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(addFriend)),
+      );
+      setState(() {
+        _friendsFuture = _userController.fetchFriends(); // Refresh friends list
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes the default back button
+        automaticallyImplyLeading: false,
         title: Row(
-          mainAxisSize: MainAxisSize.min, // Ensures the row takes up only as much space as needed
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Hedieaty',
               style: TextStyle(
-                fontFamily: 'LobsterTwo', // Use the family name defined in pubspec.yaml
+                fontFamily: 'LobsterTwo',
                 fontSize: 24,
-                fontWeight: FontWeight.bold, // Matches the 700 weight in the YAML file
+                fontWeight: FontWeight.bold,
                 color: Color(0xFFDB2367),
               ),
             ),
-            SizedBox(width: 8.0), // Add spacing between the text and image
+            SizedBox(width: 8.0),
             Image.asset(
               'assets/icons/Gift_title_Icon.png',
-              height: 30.0, // Adjust size as needed
+              height: 30.0,
               width: 30.0,
             ),
           ],
         ),
         centerTitle: true,
       ),
-        body: Padding(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Add Friend and Special Moments Section
             Center(
-                child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.75, // 75% of the screen width
-                    child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Add Friend",
-                            hintStyle: TextStyle(
-                                fontFamily: 'Aclonica',
-                                color: Colors.pinkAccent.shade100), // Hint text in pink
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                              borderSide: BorderSide(color: Color(0xFFDB2367), width: 1.0), // Border color when not focused
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.75,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _friendController,
+                        decoration: InputDecoration(
+                          hintText: "Add Friend",
+                          hintStyle: TextStyle(
+                            fontFamily: 'Aclonica',
+                            color: Colors.pinkAccent.shade100,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                            borderSide: BorderSide(
+                              color: Color(0xFFDB2367),
+                              width: 1.0,
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                              borderSide: BorderSide(color: Color(0xFFDB2367), width: 2.5), // Border color when focused
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                            borderSide: BorderSide(
+                              color: Color(0xFFDB2367),
+                              width: 2.5,
                             ),
-                            prefixIcon: Icon(
-                              Icons.person_add_alt_1,
-                              color: Color(0xFFDB2367), // Change icon color
-                            ),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.person_add_alt_1,
+                            color: Color(0xFFDB2367),
                           ),
                         ),
                       ),
-
-                      SizedBox(width: 8),
-                      SizedBox(
-                        height: 50, // Customize height
-                        width: 50,  // Customize width
-                        child: FloatingActionButton(
-                          onPressed: () {}, // Adjust icon size
-                          backgroundColor: Color(0xFFFFD700), // Gold color
-                          shape: CircleBorder(), // Add your logic
-                          child: Icon(Icons.add, size: 30, color: Color(0xFFDB2367)), // Ensures round shape
+                    ),
+                    SizedBox(width: 8),
+                    SizedBox(
+                      height: 50,
+                      width: 50,
+                      child: FloatingActionButton(
+                        onPressed: _addNewFriend,
+                        backgroundColor: Color(0xFFFFD700),
+                        shape: CircleBorder(),
+                        child: Icon(
+                          Icons.add,
+                          size: 30,
+                          color: Color(0xFFDB2367),
                         ),
                       ),
-
-                    ],
-                  )
-                )
+                    ),
+                  ],
+                ),
+              ),
             ),
             SizedBox(height: 25),
             Container(
@@ -90,15 +131,13 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Left side illustration
                   Expanded(
                     flex: 2,
                     child: Image.asset(
-                      'assets/images/gift_box.png', // Replace with actual asset
+                      'assets/images/gift_box.png',
                       height: 140,
                     ),
                   ),
-                  // Right side text and button
                   Expanded(
                     flex: 3,
                     child: Column(
@@ -111,12 +150,11 @@ class HomeScreen extends StatelessWidget {
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            // fontFamily:
                           ),
                         ),
                         SizedBox(height: 14),
                         ElevatedButton(
-                          onPressed: () {}, // Add your logic
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFFFFD700),
                             shape: RoundedRectangleBorder(
@@ -136,7 +174,6 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                         ),
                       ],
                     ),
@@ -147,49 +184,62 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 25),
             Center(
               child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.75, // 75% of the screen width
-                // Search bar
+                width: MediaQuery.of(context).size.width * 0.75,
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: "Search",
                     hintStyle: TextStyle(
-                        fontFamily: 'Aclonica',
-                        color: Colors.pinkAccent.shade100), // Hint text in pink
+                      fontFamily: 'Aclonica',
+                      color: Colors.pinkAccent.shade100,
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30.0),
-                      borderSide: BorderSide(color: Color(0xFFDB2367), width: 1.0), // Border color when not focused
+                      borderSide: BorderSide(color: Color(0xFFDB2367), width: 1.0),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30.0),
-                      borderSide: BorderSide(color: Color(0xFFDB2367), width: 2.5), // Border color when focused
+                      borderSide: BorderSide(color: Color(0xFFDB2367), width: 2.5),
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFFDB2367), // Change icon color
+                      color: Color(0xFFDB2367),
                     ),
                   ),
                 ),
-              )
+              ),
             ),
             SizedBox(height: 25),
-            // Friend List
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildFriendCard(context,"Mostafa Essam", 3),
-                  _buildFriendCard(context,"Ahmed Baher", 1),
-                ],
-              ),
+            // Fetch and display friends dynamically
+            FutureBuilder<List<UserModel>>(
+              future: _friendsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No friends found.'));
+                } else {
+                  final friends = snapshot.data!;
+                  return Expanded(
+                    child: ListView.builder(
+                      itemCount: friends.length,
+                      itemBuilder: (context, index) {
+                        return _buildFriendCard(context, friends[index]);
+                      },
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ),
       ),
-        bottomNavigationBar: CustomNavBar(selectedIndex: 2)
-
+      bottomNavigationBar: CustomNavBar(selectedIndex: 2),
     );
   }
 
-  Widget _buildFriendCard(BuildContext context, String name, int count) {
+  Widget _buildFriendCard(BuildContext context, UserModel friend) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
@@ -198,7 +248,7 @@ class HomeScreen extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: Color(0xFFFFD700).withOpacity(0.4),
           child: Text(
-            name[0],
+            friend.name[0],
             style: TextStyle(
               fontFamily: 'Aclonica',
               color: Color(0xFFDB2367),
@@ -206,7 +256,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         title: Text(
-          name,
+          friend.name,
           style: TextStyle(
             fontFamily: 'Aclonica',
           ),
@@ -214,7 +264,7 @@ class HomeScreen extends StatelessWidget {
         trailing: CircleAvatar(
           backgroundColor: Color(0xFFDB2367),
           child: Text(
-            count.toString(),
+            '1', // Example count, you can replace with actual data
             style: TextStyle(
               fontFamily: 'Aclonica',
               color: Colors.white,
@@ -227,6 +277,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
-
 }

@@ -101,4 +101,102 @@ class UserController {
   }
 
 
+  Future<String> addFriend(String phoneNumber) async {
+    final firestore = FirebaseFirestore.instance;
+
+    // Get the current user details
+    final currentUser = await getCurrentUser();
+
+    if (currentUser == null) {
+      print("No current user found.");
+      return "No current user found.";
+    }
+
+    final currentUserId = currentUser.uid;
+
+    // Step 1: Fetch user by phone number
+    final querySnapshot = await firestore
+        .collection('users')
+        .where('phone', isEqualTo: phoneNumber)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      final newUser = querySnapshot.docs.first;
+      final newUserId = newUser.id;
+
+      // Step 2: Check if friendship already exists
+      final friendsQuery = await firestore
+          .collection('friends')
+          .where('user1_id', whereIn: [currentUserId, newUserId])
+          .where('user2_id', whereIn: [currentUserId, newUserId])
+          .get();
+
+      if (friendsQuery.docs.isEmpty) {
+        // Step 3: Add friendship to 'friends' collection
+        await firestore.collection('friends').add({
+          'user1_id': currentUserId,
+          'user2_id': newUserId,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+
+        print("Friendship added successfully!");
+        return "Friendship added successfully!";
+      } else {
+        print("Friendship already exists!");
+        return "Friendship already exists!";
+      }
+    } else {
+      print("No user found with this phone number.");
+      return "No user found with this phone number.";
+    }
+  }
+
+  Future<List<UserModel>> fetchFriends() async {
+    final firestore = FirebaseFirestore.instance;
+
+    // Get the current user details
+    final currentUser = await getCurrentUser();
+
+    if (currentUser == null) {
+      print("No current user found.");
+      return [];
+    }
+
+    final currentUserId = currentUser.uid;
+
+    // Step 1: Fetch friend IDs where currentUserId is either user1_id or user2_id
+    final querySnapshot1 = await firestore
+        .collection('friends')
+        .where('user1_id', isEqualTo: currentUserId)
+        .get();
+
+    final querySnapshot2 = await firestore
+        .collection('friends')
+        .where('user2_id', isEqualTo: currentUserId)
+        .get();
+
+    // Combine friend IDs from both queries
+    final friendIds = [
+      ...querySnapshot1.docs.map((doc) => doc.data()['user2_id']),
+      ...querySnapshot2.docs.map((doc) => doc.data()['user1_id']),
+    ];
+
+    // Remove duplicates by converting to a set and back to a list
+    final uniqueFriendIds = friendIds.toSet().toList();
+
+    List<UserModel> friendsList = [];
+
+    // Step 2: Fetch user details for each unique friend ID
+    for (String friendId in uniqueFriendIds) {
+      final userDoc = await firestore.collection('users').doc(friendId).get();
+      if (userDoc.exists) {
+        // Convert Firestore data to UserModel
+        final userModel = UserModel.fromFirestore(userDoc.data()!);
+        friendsList.add(userModel);
+      }
+    }
+
+    return friendsList; // List of UserModel objects
+  }
+
 }
