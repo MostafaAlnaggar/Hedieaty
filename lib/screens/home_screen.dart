@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       setState(() {
         _friendsFuture = _userController.fetchFriends(); // Refresh friends list
+        _friendController.text = "";
       });
     }
   }
