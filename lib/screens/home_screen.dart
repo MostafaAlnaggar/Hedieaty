@@ -290,7 +290,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         onTap: () {
-          Navigator.pushNamed(context, '/friend');
+          Navigator.pushNamed(context,
+              '/friend',
+              arguments: friend,
+          );
         },
       ),
     );

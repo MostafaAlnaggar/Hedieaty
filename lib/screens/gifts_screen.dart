@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_lab_3/layouts/friends_gift_card.dart';
 import 'package:mobile_lab_3/layouts/gift_card.dart';
 import 'package:mobile_lab_3/models/gift.dart';
 import 'package:mobile_lab_3/controllers/gift_controller.dart';
@@ -15,43 +16,71 @@ class _GiftsScreenState extends State<GiftsScreen> {
   List<Gift> _gifts = [];
   String? _selectedSortOption;
   int eventId = -1; // Default value
+  String fireBaseId = "";
   String eventName = "";
+  // Declare _isInitialized as a private variable in the state class
+  bool _isInitialized = false;
 
   @override
   void initState(){
     super.initState();
-    _loadGifts();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Extract eventId from route arguments
-    final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    if (args != null && args['eventId'] != null && args['eventName'] != null) {
+    // Ensure _loadGifts is called only once
+    if (_isInitialized) return;
+
+    // Extract eventId and firebaseId from route arguments
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is Map) {
       setState(() {
-        eventId = args['eventId'] as int;
-        eventName = args["eventName"] as String;
+        if (args['firebaseId'] != null) {
+          fireBaseId = args['firebaseId'] as String;
+        }
+
+        if (args['eventId'] != null && args['eventName'] != null) {
+          eventId = args['eventId'] as int;
+          eventName = args["eventName"] as String;
+        }
       });
-      // _loadGifts();
-    } else {
-      // _loadGifts(); // Load all gifts if no eventId is passed
     }
+
+    // Load gifts
+    _loadGifts();
+    _isInitialized = true; // Mark as initialized
   }
+
 
   Future<void> _loadGifts() async {
     List<Gift> gifts;
-    if (eventId == -1) {
-      gifts = await _controller.getAllGifts();
-    } else {
-      gifts = await _controller.getGiftsByEventId(eventId);
-    }
+    try {
+      if (fireBaseId.isNotEmpty) {
+        // Fetch gifts using the firebase event ID if it's initialized
+        gifts = await _controller.fetchGiftsForEvent(fireBaseId);
+      } else if (eventId == -1) {
+        // Fetch all gifts if eventId is -1
+        gifts = await _controller.getAllGifts();
+      } else {
+        // Fetch gifts by event ID otherwise
+        gifts = await _controller.getGiftsByEventId(eventId);
+      }
 
-    setState(() {
-      _gifts = gifts;
-    });
+      setState(() {
+        _gifts = gifts;
+      });
+    } catch (e) {
+      // Handle any errors gracefully
+      print('Error loading gifts: $e');
+      setState(() {
+        _gifts = [];
+      });
+    }
   }
+
 
   void _sortGifts(String sortOption) {
     setState(() {
@@ -183,7 +212,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 itemCount: _gifts.length,
                 itemBuilder: (context, index) {
                   final gift = _gifts[index];
-                  return GiftCard(gift: gift);
+                  return fireBaseId.isNotEmpty?FriendGiftCard(gift: gift, eventTitle: eventName):GiftCard(gift: gift);
                 },
               ),
             ),

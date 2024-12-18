@@ -206,6 +206,7 @@ class UserController {
     return friendsList; // List of UserModel objects
   }
 
+
   // Fetch events for a user by their userId
   Future<List<Event>> fetchUserEvents(String userId) async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -230,6 +231,7 @@ class UserController {
     }
   }
 
+
   Future<int> fetchUserUpcomingEventsLength(String userId) async {
     // Fetch the user's events
     List<Event> myList = await fetchUserEvents(userId);
@@ -248,6 +250,34 @@ class UserController {
 
     // Return the count of upcoming events
     return upcomingEvents.length;
+  }
+
+
+  Future<UserModel?> getUserByIdFromFirebase(String userId) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Directly fetch the user document by ID
+      final docSnapshot = await firestore.collection('users').doc(userId).get();
+
+      // Check if the document exists
+      if (!docSnapshot.exists) {
+        print("User with ID $userId not found.");
+        return null; // Return null if user doesn't exist
+      }
+
+      // Map the document data to the UserModel
+      final data = docSnapshot.data();
+      if (data == null) {
+        print("No data found for user ID $userId.");
+        return null; // Return null if no data exists
+      }
+
+      return UserModel.fromFirestore(data); // Map and return the user data
+    } catch (e) {
+      print("Error fetching user: ${e.toString()}");
+      throw Exception("Failed to fetch user: $e"); // Throw exception for better error handling
+    }
   }
 
 }

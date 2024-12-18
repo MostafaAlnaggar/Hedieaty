@@ -11,8 +11,9 @@ class EventCard extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
   final VoidCallback onDelete;
-  final ValueChanged<Event> onUpdate; // Updated type
+  final ValueChanged<Event> onUpdate;
   final bool showActions;
+  final String? firebaseId; // Optional Firebase ID
 
   const EventCard({
     Key? key,
@@ -25,6 +26,7 @@ class EventCard extends StatefulWidget {
     required this.onDelete,
     required this.onUpdate,
     this.showActions = true,
+    this.firebaseId, // Include the optional parameter
   }) : super(key: key);
 
   @override
@@ -74,9 +76,18 @@ class _EventCardState extends State<EventCard> {
     return Column(
       children: [
         GestureDetector(
-          onTap:(){
-            Navigator.pushNamed(context, '/gifts', arguments: {'eventId': widget.eventId, 'eventName': widget.title});
-          }, // Navigate when tapped
+          onTap: () {
+            // Navigate to gifts_screen with the Firebase ID if provided
+            Navigator.pushNamed(
+              context,
+              '/gifts',
+              arguments: {
+                'eventId': widget.eventId,
+                'eventName': widget.title,
+                if (widget.firebaseId != null) 'firebaseId': widget.firebaseId,
+              },
+            );
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -101,7 +112,7 @@ class _EventCardState extends State<EventCard> {
                 ListTile(
                   leading: CircleAvatar(
                     backgroundColor: widget.iconColor.withOpacity(0.4),
-                    child: Icon(widget.icon, color: Color(0xFFDB2367)),
+                    child: Icon(widget.icon, color: const Color(0xFFDB2367)),
                   ),
                   title: _isEditing
                       ? TextFormField(
@@ -136,8 +147,8 @@ class _EventCardState extends State<EventCard> {
                             });
                           }
                         },
-                        decoration:
-                        const InputDecoration(labelText: 'Category'),
+                        decoration: const InputDecoration(
+                            labelText: 'Category'),
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
@@ -185,7 +196,7 @@ class _EventCardState extends State<EventCard> {
                           _isEditing ? Icons.cancel : Icons.edit,
                           color: _isEditing
                               ? Colors.red
-                              : Color(0xFFDB2367),
+                              : const Color(0xFFDB2367),
                         ),
                       ),
                       IconButton(
@@ -201,7 +212,7 @@ class _EventCardState extends State<EventCard> {
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFFD700)),
+                          backgroundColor: const Color(0xFFFFD700)),
                       onPressed: () {
                         final updatedEvent = Event(
                           title: _title,

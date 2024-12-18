@@ -113,7 +113,7 @@ class GiftController {
 
   Future<List<Gift>> fetchGiftsForEvent(String fireBaseEventId) async {
     try {
-      int localEventId = int.parse(fireBaseEventId.split('_')[-1]);
+      int localEventId = int.parse(fireBaseEventId.split('_').last);
       FirebaseFirestore db = FirebaseFirestore.instance;
       QuerySnapshot snapshot = await db
           .collection('events')

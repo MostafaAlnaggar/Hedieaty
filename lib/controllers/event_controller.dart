@@ -62,6 +62,7 @@ class EventController {
     }
   }
 
+
   Future<bool> _publishSingleEvent(Event event, String uid, CollectionReference eventsRef,GiftController giftController ) async{
     String uniqueId = '${uid}_${event.id}'; // Create composite ID
     DocumentSnapshot existingEventDoc = await eventsRef.doc(uniqueId).get();
@@ -106,4 +107,34 @@ class EventController {
     return returnValue;
 
   }
+
+  Future<List<Event>> getEventsByUserIdFromFirebase(String userId) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Query Firestore to get events where 'createdBy' matches the userId
+      final querySnapshot = await firestore
+          .collection('events')
+          .where('createdBy', isEqualTo: userId)
+          .get();
+
+      // Map the fetched documents into a list of Event objects
+      List<Event> events = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return Event(
+          title: data['title'] ?? '',
+          category: data['category'] ?? '',
+          date: data['date'],
+          userId: userId,
+          firebaseId: doc.id
+        );
+      }).toList();
+
+      return events;
+    } catch (e) {
+      print("Error fetching events for user $userId: ${e.toString()}");
+      return []; // Return an empty list in case of error
+    }
+  }
+
 }
