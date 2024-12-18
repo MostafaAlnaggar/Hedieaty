@@ -212,7 +212,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 itemCount: _gifts.length,
                 itemBuilder: (context, index) {
                   final gift = _gifts[index];
-                  return fireBaseId.isNotEmpty?FriendGiftCard(gift: gift, eventTitle: eventName):GiftCard(gift: gift);
+                  return fireBaseId.isNotEmpty?FriendGiftCard(gift: gift, eventTitle: eventName, eventId: fireBaseId,):GiftCard(gift: gift);
                 },
               ),
             ),

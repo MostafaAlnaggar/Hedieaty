@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile_lab_3/controllers/user_controller.dart';
 import 'package:mobile_lab_3/database/gift_dao.dart';
 import 'package:mobile_lab_3/models/gift.dart';
+
+import '../models/user.dart';
 
 class GiftController {
   final GiftDAO _dao = GiftDAO();
@@ -123,6 +126,7 @@ class GiftController {
 
       return snapshot.docs.map((doc) {
         return Gift(
+          firebaseId: doc.id,
           title: doc['title'],
           price: doc['price'],
           description: doc['description'],
@@ -136,5 +140,118 @@ class GiftController {
       return [];
     }
   }
+
+
+  Future<String> pledgeGift(String eventId, String? giftId) async {
+    try {
+      UserController userController = UserController();
+      UserModel? currentUser = await userController.getCurrentUser();
+      String userId = "";
+      if(currentUser != null){
+        userId = currentUser.uid;
+      }
+      else{
+        return "Connection Error";
+      }
+      // Get a reference to the Firestore collection for events
+      final eventDoc = FirebaseFirestore.instance.collection('events').doc(eventId);
+
+      // Fetch the event document
+      final eventSnapshot = await eventDoc.get();
+      if (!eventSnapshot.exists) {
+        return "Error: Event with ID $eventId does not exist.";
+      }
+
+      // Fetch the gifts collection inside the event
+      final giftsCollection = eventDoc.collection('gifts');
+      final giftDoc = giftsCollection.doc(giftId);
+
+      // Fetch the gift document
+      final giftSnapshot = await giftDoc.get();
+      if (!giftSnapshot.exists) {
+        return "Error: Gift with ID $giftId does not exist in event $eventId.";
+      }
+
+      // Check the isPledged attribute
+      final giftData = giftSnapshot.data();
+      if (giftData == null || giftData['isPledged'] == null) {
+        return "Error: Gift with ID $giftId is missing required attributes.";
+      }
+
+      if (giftData['isPledged'] == true) {
+        return "Error: Gift with ID $giftId is already pledged.";
+      }
+
+      // Update the gift to mark it as pledged and add the pledgedBy attribute
+      await giftDoc.update({
+        'isPledged': true,
+        'pledgedBy': userId,
+      });
+
+      return "Success: Gift with ID $giftId has been pledged by user $userId.";
+    } catch (e) {
+      // Handle any errors
+      return "Error: ${e.toString()}";
+    }
+  }
+
+
+  Future<String> unpledgeGift(String eventId, String? giftId) async {
+    try {
+      UserController userController = UserController();
+      UserModel? currentUser = await userController.getCurrentUser();
+      String userId = "";
+      if(currentUser != null){
+        userId = currentUser.uid;
+      }
+      else{
+        return "Connection Error";
+      }
+      // Get a reference to the Firestore collection for events
+      final eventDoc = FirebaseFirestore.instance.collection('events').doc(eventId);
+
+      // Fetch the event document
+      final eventSnapshot = await eventDoc.get();
+      if (!eventSnapshot.exists) {
+        return "Error: Event with ID $eventId does not exist.";
+      }
+
+      // Fetch the gifts collection inside the event
+      final giftsCollection = eventDoc.collection('gifts');
+      final giftDoc = giftsCollection.doc(giftId);
+
+      // Fetch the gift document
+      final giftSnapshot = await giftDoc.get();
+      if (!giftSnapshot.exists) {
+        return "Error: Gift with ID $giftId does not exist in event $eventId.";
+      }
+
+      // Check the isPledged and pledgedBy attributes
+      final giftData = giftSnapshot.data();
+      if (giftData == null || giftData['isPledged'] == null || giftData['pledgedBy'] == null) {
+        return "Error: Gift with ID $giftId is missing required attributes.";
+      }
+
+      if (giftData['isPledged'] == false) {
+        return "Error: Gift is not currently pledged.";
+      }
+
+      if (giftData['pledgedBy'] != userId) {
+        return "Error: Gift was not pledged by you.";
+      }
+
+      // Update the gift to unpledge it
+      await giftDoc.update({
+        'isPledged': false,
+        'pledgedBy': FieldValue.delete(), // Removes the pledgedBy attribute
+      });
+
+      return "Success: Gift has been unpledged.";
+    } catch (e) {
+      // Handle any errors
+      return "Error: ${e.toString()}";
+    }
+  }
+
 
 }

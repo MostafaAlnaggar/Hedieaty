@@ -6,6 +6,7 @@ class Gift {
   String description;
   bool isPledged;
   int eventId; // New field for foreign key
+  String? firebaseId;
 
   Gift({
     this.id,
@@ -15,6 +16,7 @@ class Gift {
     required this.description,
     required this.isPledged,
     required this.eventId,
+    this.firebaseId
   });
 
   // Convert Gift to Map for database operations
