@@ -179,14 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               setState(() {
                                 _isLoading = false;
                               });
-                              if (!confirm) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        "Login failed. Please try again."),
-                                  ),
-                                );
-                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -241,8 +233,27 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushNamed(context, '/home');
       return true;
     } on FirebaseAuthException catch (e) {
-      print('Error: ${e.message}');
+      String errorMessage;
+      print(e.code);
+      // Handle specific FirebaseAuth errors
+      switch (e.code) {
+        case 'invalid-credential':
+          errorMessage = 'Wrong Email or Password.';
+          break;
+        default:
+          errorMessage = 'An unexpected error occurred. Please try again.';
+      }
+
+      // Show error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+
       return false;
     }
   }
+
 }
