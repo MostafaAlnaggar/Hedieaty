@@ -16,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<UserModel>> _friendsFuture;
   late List<UserModel> _allFriends; // To hold the complete list of friends
   late List<UserModel> _filteredFriends; // To hold the filtered list
-  UserController _userController = UserController();
+  final UserController _userController = UserController();
   String _searchQuery = "";
 
   @override
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: _filteredFriends.length,
                       itemBuilder: (context, index) {
                         return _buildFriendCard(
-                            context, _filteredFriends[index], '0'); // Replace '0' with event count if needed
+                            context, _filteredFriends[index]); // Replace '0' with event count if needed
                       },
                     );
                   }
@@ -266,7 +266,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFriendCard(BuildContext context, UserModel friend, String count) {
+
+  Widget _buildFriendCard(BuildContext context, UserModel friend) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
@@ -288,15 +289,40 @@ class _HomeScreenState extends State<HomeScreen> {
             fontFamily: 'Aclonica',
           ),
         ),
-        trailing: CircleAvatar(
-          backgroundColor: Color(0xFFDB2367),
-          child: Text(
-            count,
-            style: TextStyle(
-              fontFamily: 'Aclonica',
-              color: Colors.white,
-            ),
-          ),
+        trailing: FutureBuilder<int>(
+          future: _userController.fetchUserUpcomingEventsLength(friend.uid), // Pass friend's ID to fetch their event count
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator(
+                color: Color(0xFFDB2367),
+                strokeWidth: 2,
+              );
+            } else if (snapshot.hasError) {
+              return Icon(Icons.error, color: Colors.red);
+            } else if (!snapshot.hasData || snapshot.data == 0) {
+              return CircleAvatar(
+                backgroundColor: Colors.grey,
+                child: Text(
+                  '0',
+                  style: TextStyle(
+                    fontFamily: 'Aclonica',
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            } else {
+              return CircleAvatar(
+                backgroundColor: Color(0xFFDB2367),
+                child: Text(
+                  '${snapshot.data}', // Display the event count
+                  style: TextStyle(
+                    fontFamily: 'Aclonica',
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }
+          },
         ),
         onTap: () {
           Navigator.pushNamed(
@@ -308,4 +334,5 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 }
