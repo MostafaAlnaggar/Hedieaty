@@ -234,11 +234,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return true;
     } on FirebaseAuthException catch (e) {
       String errorMessage;
-      print(e.code);
       // Handle specific FirebaseAuth errors
       switch (e.code) {
         case 'invalid-credential':
           errorMessage = 'Wrong Email or Password.';
+          break;
+        case 'network-request-failed':
+          errorMessage = "No internet connection. Please check your connection";
           break;
         default:
           errorMessage = 'An unexpected error occurred. Please try again.';

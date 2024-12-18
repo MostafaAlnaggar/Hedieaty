@@ -46,7 +46,7 @@ class _EventsScreenState extends State<EventsScreen> {
 
     if (sortOption == "Sort by Title") {
       events.sort((a, b) => a.title.compareTo(b.title));
-    } else if (sortOption == "Sort by Date") {
+    } else if (sortOption == "Sort by Status") {
       events.sort((a, b) => a.date.compareTo(b.date));
     } else if (sortOption == "Sort by Category") {
       events.sort((a, b) => a.category.compareTo(b.category));
@@ -110,7 +110,7 @@ class _EventsScreenState extends State<EventsScreen> {
                     contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                     prefixIcon: Icon(Icons.sort, color: Color(0xFFDB2367)),
                   ),
-                  items: ["Sort by Title", "Sort by Date", "Sort by Category"]
+                  items: ["Sort by Title", "Sort by Status", "Sort by Category"]
                       .map(
                         (String value) => DropdownMenuItem<String>(
                       value: value,

@@ -44,6 +44,8 @@ class _EventCardState extends State<EventCard> {
   late String _originalCategory;
   late String _originalDate;
 
+  late String _status; // Added to track status
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +57,47 @@ class _EventCardState extends State<EventCard> {
     _originalTitle = widget.title;
     _originalCategory = widget.category;
     _originalDate = widget.date;
+
+    _status = _calculateStatus(); // Calculate initial status
   }
+
+  /// Method to calculate the status based on the date
+  String _calculateStatus() {
+    final today = DateTime.now();
+    final eventDate = DateTime.tryParse(_date)?.toLocal() ?? DateTime.now();
+
+    // Compare only the date parts
+    if (eventDate.year == today.year &&
+        eventDate.month == today.month &&
+        eventDate.day == today.day) {
+      return "Current";
+    } else if (eventDate.isAfter(today)) {
+      return "Upcoming";
+    } else {
+      return "Past";
+    }
+  }
+
+
+  /// Method to get the color based on the status
+  Color _getStatusColor() {
+    switch (_status) {
+      case "Current":
+        return const Color(0xFFFFD700);
+      case "Upcoming":
+        return const Color(0xFFDB2367);
+      case "Past":
+        return Colors.grey;
+      default:
+        return Colors.transparent;
+    }
+  }
+
+  /// Build the dynamic border using the status color
+  Border _buildBorder() {
+    return Border.all(color: _getStatusColor(), width: 2);
+  }
+
 
   Future<void> _pickDate() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -67,6 +109,7 @@ class _EventCardState extends State<EventCard> {
     if (pickedDate != null) {
       setState(() {
         _date = pickedDate.toLocal().toString().split(' ')[0];
+        _status = _calculateStatus(); // Recalculate status when date changes
       });
     }
   }
@@ -77,7 +120,7 @@ class _EventCardState extends State<EventCard> {
       children: [
         GestureDetector(
           onTap: () {
-            // Navigate to gifts_screen with the Firebase ID if provided
+            if(!_isEditing){
             Navigator.pushNamed(
               context,
               '/gifts',
@@ -87,6 +130,7 @@ class _EventCardState extends State<EventCard> {
                 if (widget.firebaseId != null) 'firebaseId': widget.firebaseId,
               },
             );
+            }
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -95,12 +139,10 @@ class _EventCardState extends State<EventCard> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: _isEditing
-                  ? Border.all(color: const Color(0xFFFFD700), width: 2)
-                  : null,
+              border: _buildBorder(), // Use dynamic border
               boxShadow: [
                 if (_isEditing)
-                  BoxShadow(
+                  const BoxShadow(
                     color: Colors.black12,
                     blurRadius: 10,
                     spreadRadius: 5,
@@ -111,8 +153,8 @@ class _EventCardState extends State<EventCard> {
               children: [
                 ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: widget.iconColor.withOpacity(0.4),
-                    child: Icon(widget.icon, color: const Color(0xFFDB2367)),
+                    backgroundColor: _getStatusColor(),
+                    child: Icon(widget.icon, color: Colors.white),
                   ),
                   title: _isEditing
                       ? TextFormField(
@@ -168,14 +210,15 @@ class _EventCardState extends State<EventCard> {
                       ),
                     ],
                   )
-                      : Text(
-                    "Category: $_category\nDate: $_date",
-                    style: const TextStyle(
+                      :Text(
+                    "Category: $_category\nDate: $_date\nStatus: $_status",
+                    style: TextStyle(
                       fontFamily: 'Aclonica',
                       fontSize: 14,
                       color: Colors.grey,
                     ),
                   ),
+
                   trailing: widget.showActions
                       ? Row(
                     mainAxisSize: MainAxisSize.min,
@@ -196,12 +239,13 @@ class _EventCardState extends State<EventCard> {
                           _isEditing ? Icons.cancel : Icons.edit,
                           color: _isEditing
                               ? Colors.red
-                              : const Color(0xFFDB2367),
+                              : _getStatusColor(),
                         ),
                       ),
                       IconButton(
                         onPressed: widget.onDelete,
-                        icon: const Icon(Icons.delete, color: Colors.red),
+                        icon:
+                        const Icon(Icons.delete, color: Colors.red),
                       ),
                     ],
                   )
@@ -227,6 +271,7 @@ class _EventCardState extends State<EventCard> {
                           _originalTitle = _title;
                           _originalCategory = _category;
                           _originalDate = _date;
+                          _status = _calculateStatus(); // Recalculate status
                           print('Saved changes: $updatedEvent');
                         });
                       },
@@ -246,4 +291,5 @@ class _EventCardState extends State<EventCard> {
       ],
     );
   }
+
 }
