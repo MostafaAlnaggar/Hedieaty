@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,12 +10,13 @@ import '../models/user.dart';
 class UserController {
   final UserDAO _dao = UserDAO();
 
-  // Sign-up a new user
+
+// Sign-up a new user
   Future<String?> signUp(UserModel user, String password) async {
     try {
       // Check if the phone number is unique
       if (!await _dao.isPhoneNumberUnique(user.phone)) {
-        return "Phone number already in use.";
+        return "Phone number is already in use.";
       }
 
       // Check if the email is unique
@@ -39,8 +41,17 @@ class UserController {
       await _dao.addUser(newUser);
 
       return null; // Success
+    } on FirebaseAuthException catch (e) {
+      // Handle specific FirebaseAuth errors
+      if(e.code == 'network-request-failed'){
+        return "No internet connection. Please check your connection";
+      }
+      else{
+        return e.message;
+      }
     } catch (e) {
-      return e.toString(); // Return error message
+      // Handle other errors
+      return "An unexpected error occurred: ${e.toString()}";
     }
   }
 

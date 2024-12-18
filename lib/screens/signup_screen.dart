@@ -113,40 +113,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             obscureText: _passwordVisible,
                           ),
                           SizedBox(height: 20),
-                          _isLoading
-                              ? CircularProgressIndicator()
-                              : ElevatedButton(
-                              onPressed: () {
-                                // Validate inputs (name, email, phone, password)
-                                if (_formKey.currentState!.validate()) {
-                                  // Call the handleSignUp function
-                                  _handleSignUp(
-                                    context,
-                                    _nameController.text,
-                                    _emailController.text,
-                                    _phoneController.text,
-                                    _passwordController.text,
-                                  );
-                                }
-                              },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFFFFD700), // Yellow color
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 13,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30.0),
-                              ),
+                        _isLoading
+                            ? CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)), // Yellow color
+                        )
+                            : ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              _handleSignUp(
+                                context,
+                                _nameController.text,
+                                _emailController.text,
+                                _phoneController.text,
+                                _passwordController.text,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFFFFD700), // Yellow color
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 13,
                             ),
-                            child: Text(
-                              "SIGN-UP",
-                              style: TextStyle(
-                                color: Color(0xFFDB2367),
-                                fontFamily: "Aclonica",
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
                             ),
                           ),
+                          child: Text(
+                            "SIGN-UP",
+                            style: TextStyle(
+                              color: Color(0xFFDB2367),
+                              fontFamily: "Aclonica",
+                            ),
+                          ),
+                        ),
+
                           SizedBox(height: 10),
                           TextButton(
                             onPressed: () => Navigator.push(
@@ -218,32 +219,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _handleSignUp(BuildContext context, String name, String email, String phone, String password) async {
-    // Create a UserModel instance
-    UserModel user = UserModel(
-      uid: '', // Placeholder; this will be populated in Firestore after signup
-      name: name,
-      email: email,
-      phone: phone,
-    );
+    setState(() {
+      _isLoading = true; // Start loading
+    });
 
-    // Instantiate the UserController
-    UserController userController = UserController();
-
-    // Call the signUp function
-    String? result = await userController.signUp(user, password);
-
-    // Handle the result
-    if (result == null) {
-      // Signup successful
-      Navigator.pushNamed(context, '/home'); // Navigate to the home screen
-    } else {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result)),
+    try {
+      // Create a UserModel instance
+      UserModel user = UserModel(
+        uid: '', // Placeholder; this will be populated in Firestore after signup
+        name: name,
+        email: email,
+        phone: phone,
       );
+
+      // Instantiate the UserController
+      UserController userController = UserController();
+
+      // Call the signUp function
+      String? result = await userController.signUp(user, password);
+
+      if (result == null) {
+        // Signup successful
+        Navigator.pushNamed(context, '/home'); // Navigate to the home screen
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result)),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
-
 
 
 }
