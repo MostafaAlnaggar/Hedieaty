@@ -12,13 +12,21 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _friendController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   late Future<List<UserModel>> _friendsFuture;
+  late List<UserModel> _allFriends; // To hold the complete list of friends
+  late List<UserModel> _filteredFriends; // To hold the filtered list
   UserController _userController = UserController();
+  String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
     _friendsFuture = _userController.fetchFriends();
+    _friendsFuture.then((friends) {
+      _allFriends = friends;
+      _filteredFriends = friends;
+    });
   }
 
   Future<void> _addNewFriend() async {
@@ -29,10 +37,28 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(content: Text(addFriend)),
       );
       setState(() {
-        _friendsFuture = _userController.fetchFriends(); // Refresh friends list
+        _friendsFuture = _userController.fetchFriends();
+        _friendsFuture.then((friends) {
+          _allFriends = friends;
+          _filteredFriends = friends;
+        });
         _friendController.text = "";
       });
     }
+  }
+
+  void _filterFriends(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredFriends = _allFriends;
+      } else {
+        _filteredFriends = _allFriends
+            .where((friend) =>
+            friend.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
   }
 
   @override
@@ -186,6 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.75,
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterFriends,
                   decoration: InputDecoration(
                     hintText: "Search",
                     hintStyle: TextStyle(
@@ -209,46 +237,27 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SizedBox(height: 25),
-            // Fetch and display friends dynamically
-            FutureBuilder<List<UserModel>>(
-              future: _friendsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No friends found.'));
-                } else {
-                  final friends = snapshot.data!;
-
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: friends.length,
+            Expanded(
+              child: FutureBuilder<List<UserModel>>(
+                future: _friendsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No friends found.'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: _filteredFriends.length,
                       itemBuilder: (context, index) {
-                        return FutureBuilder<int>(
-                          future: _userController.fetchUserUpcomingEventsLength(friends[index].uid), // Fetch the events length asynchronously
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              // Show loading indicator while the data is being fetched
-                              return _buildFriendCard(context, friends[index], '..');
-                            } else if (snapshot.hasError) {
-                              // Handle error
-                              return _buildFriendCard(context, friends[index], '!');
-                            } else if (snapshot.hasData) {
-                              // When the data is fetched successfully
-                              return _buildFriendCard(context, friends[index], snapshot.data.toString());
-                            } else {
-                              // In case there's no data
-                              return _buildFriendCard(context, friends[index], '0');
-                            }
-                          },
-                        );
+                        return _buildFriendCard(
+                            context, _filteredFriends[index], '0'); // Replace '0' with event count if needed
                       },
-                    ),
-                  );
-                }
-              },
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -290,7 +299,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         onTap: () {
-          Navigator.pushNamed(context,
+          Navigator.pushNamed(
+            context,
             '/friend',
             arguments: friend,
           );
