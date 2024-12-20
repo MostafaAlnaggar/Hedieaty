@@ -37,13 +37,16 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   firebase_auth: ^5.3.3
-  firebase_core: ^3.8.0
+  firebase_core: ^3.9.0
   cloud_firestore: ^5.5.0
 
   sqflite: ^2.4.1
   path_provider: ^2.1.5
   intl: ^0.20.1
   connectivity_plus: ^6.1.1
+  firebase_messaging: ^15.1.6
+  googleapis_auth: ^1.6.0
+#  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +78,7 @@ flutter:
      - assets/icons/Home_White_Icon.png
      - assets/icons/Event_Icon.png
      - assets/icons/Hand_Icon.png
+     - assets/hediaty-94232-firebase-adminsdk-aicza-37f3e9828b.json
 
   #   - images/a_dot_ham.jpeg
 

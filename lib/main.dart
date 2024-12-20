@@ -10,7 +10,9 @@ import 'package:mobile_lab_3/screens/gifts_screen.dart';
 import 'package:mobile_lab_3/screens/home_screen.dart';
 import 'package:mobile_lab_3/screens/profile_screen.dart';
 import 'package:mobile_lab_3/screens/signup_screen.dart';
+import 'package:mobile_lab_3/services/notification_service.dart';
 import 'Screens/login_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,15 @@ void main() async {
 
   // Check if the user is logged in
   final User? currentUser = FirebaseAuth.instance.currentUser;
-  runApp(MyApp(initialRoute: currentUser != null ? '/home' : '/login'));
+  if (currentUser != null){
+    runApp(MyApp(initialRoute: '/home'));
+    NotificationService notificationService = NotificationService();
+    await notificationService.initialize(false);
+    print("NotificationService initialized successfully");
+  }
+  else{
+    runApp(MyApp(initialRoute: '/login'));
+  }
 }
 
 class MyApp extends StatelessWidget {

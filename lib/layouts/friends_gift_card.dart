@@ -29,7 +29,7 @@ class _FriendGiftCardState extends State<FriendGiftCard> {
 
   void _togglePledgeStatus() async {
     if(!isPledged){
-      String returnOfFunction = await _giftController.pledgeGift(widget.eventId,widget.gift.firebaseId);
+      String returnOfFunction = await _giftController.pledgeGift(widget.eventId,widget.gift.firebaseId,widget.gift.title);
       if (returnOfFunction.startsWith("Success")) {
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +54,7 @@ class _FriendGiftCardState extends State<FriendGiftCard> {
       }
     }
     else{
-      String returnOfFunction = await _giftController.unpledgeGift(widget.eventId,widget.gift.firebaseId);
+      String returnOfFunction = await _giftController.unpledgeGift(widget.eventId,widget.gift.firebaseId,widget.gift.title);
       if (returnOfFunction.startsWith("Success")) {
 
         ScaffoldMessenger.of(context).showSnackBar(

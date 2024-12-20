@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/notification_service.dart';
+
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -230,6 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
         email: email,
         password: password,
       );
+      NotificationService notificationService = NotificationService();
+      await notificationService.initialize(true);
+      print("NotificationService initialized successfully");
+
       Navigator.pushNamed(context, '/home');
       return true;
     } on FirebaseAuthException catch (e) {

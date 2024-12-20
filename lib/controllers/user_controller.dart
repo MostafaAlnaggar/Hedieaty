@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../database/user_dao.dart';
 import '../models/event.dart';
 import '../models/user.dart';
+import '../services/notification_service.dart';
 
 class UserController {
   final UserDAO _dao = UserDAO();
@@ -65,6 +66,11 @@ class UserController {
         password: password,
       );
 
+      NotificationService notificationService = NotificationService();
+      await notificationService.initialize(true);
+      print("NotificationService initialized successfully");
+
+
       // Navigate to home screen
       Navigator.pushNamed(context, '/home');
       return true;
@@ -73,7 +79,6 @@ class UserController {
       return false;
     }
   }
-
 
   // Get current user
   Future<UserModel?> getCurrentUser() async {

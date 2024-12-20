@@ -41,3 +41,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+assets/hediaty-94232-firebase-adminsdk-aicza-37f3e9828b.json

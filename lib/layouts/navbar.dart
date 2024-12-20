@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/notification_service.dart';
+
 class CustomNavBar extends StatelessWidget {
   final int selectedIndex;
   final bool highlightSelected; // New flag to control highlighting
