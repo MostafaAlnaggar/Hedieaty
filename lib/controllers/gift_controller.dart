@@ -172,17 +172,17 @@ class GiftController {
       // Fetch the gift document
       final giftSnapshot = await giftDoc.get();
       if (!giftSnapshot.exists) {
-        return "Error: Gift with ID $giftId does not exist in event $eventId.";
+        return "Error: $giftTitle does not exist in event $eventId.";
       }
 
       // Check the isPledged attribute
       final giftData = giftSnapshot.data();
       if (giftData == null || giftData['isPledged'] == null) {
-        return "Error: Gift with ID $giftId is missing required attributes.";
+        return "Error: $giftTitle is missing required attributes.";
       }
 
       if (giftData['isPledged'] == true) {
-        return "Error: Gift with ID $giftId is already pledged.";
+        return "Error: $giftTitle is already pledged.";
       }
 
       // Update the gift to mark it as pledged and add the pledgedBy attribute
@@ -211,7 +211,7 @@ class GiftController {
         body: "Your gift $giftTitle has been pledged by $userName.",
       );
 
-      return "Success: Gift with ID $giftId has been pledged by user $userId.";
+      return "Success: $giftTitle has been pledged.";
     } catch (e) {
       // Handle any errors
       return "Error: ${e.toString()}";
@@ -249,21 +249,21 @@ class GiftController {
       // Fetch the gift document
       final giftSnapshot = await giftDoc.get();
       if (!giftSnapshot.exists) {
-        return "Error: Gift with ID $giftId does not exist in event $eventId.";
+        return "Error: $giftTitle does not exist in event $eventId.";
       }
 
       // Check the isPledged and pledgedBy attributes
       final giftData = giftSnapshot.data();
       if (giftData == null || giftData['isPledged'] == null || giftData['pledgedBy'] == null) {
-        return "Error: Gift with ID $giftId is missing required attributes.";
+        return "Error: $giftTitle is missing required attributes.";
       }
 
       if (giftData['isPledged'] == false) {
-        return "Error: Gift is not currently pledged.";
+        return "Error: $giftTitle is not currently pledged.";
       }
 
       if (giftData['pledgedBy'] != userId) {
-        return "Error: Gift was not pledged by you.";
+        return "Error: $giftTitle was not pledged by you.";
       }
 
       // Update the gift to unpledge it
@@ -292,7 +292,7 @@ class GiftController {
         body: "Your gift $giftTitle has been unpledged by $userName.",
       );
 
-      return "Success: Gift has been unpledged and notification sent.";
+      return "Success: $giftTitle has been unpledged.";
     } catch (e) {
       // Handle any errors
       return "Error: ${e.toString()}";
