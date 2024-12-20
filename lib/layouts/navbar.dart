@@ -30,7 +30,7 @@ class CustomNavBar extends StatelessWidget {
             );
 
           } else if (index == 1) {
-            Navigator.pushNamed(context, '/donations');
+            Navigator.pushNamed(context, '/pledged_gifts');
           } else if (index == 2) {
             Navigator.pushNamed(context, '/home');
           } else if (index == 3) {

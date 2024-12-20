@@ -39,6 +39,10 @@ class UserController {
         phone: user.phone,
       );
       await _dao.addUser(newUser);
+      NotificationService notificationService = NotificationService();
+      await notificationService.initialize(true);
+      print("NotificationService initialized successfully");
+
 
       return null; // Success
     } on FirebaseAuthException catch (e) {

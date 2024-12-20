@@ -4,12 +4,12 @@ import 'package:mobile_lab_3/models/gift.dart';
 
 class FriendGiftCard extends StatefulWidget {
   final Gift gift;
-  final String eventTitle;
+  String? eventTitle;
   final String eventId;
 
-  const FriendGiftCard({
+  FriendGiftCard({
     required this.gift,
-    required this.eventTitle,
+    this.eventTitle,
     required this.eventId,
     Key? key,
   }) : super(key: key);
@@ -104,13 +104,16 @@ class _FriendGiftCardState extends State<FriendGiftCard> {
           ),
         ),
         subtitle: Text(
-          "Category: ${widget.gift.category}\nPrice: ${widget.gift.price}\nEvent: ${widget.eventTitle}",
+          "Category: ${widget.gift.category}\n"
+              "Price: ${widget.gift.price}\n"
+              "${widget.eventTitle != null ? "Event: ${widget.eventTitle}" : ""}",
           style: TextStyle(
             fontFamily: 'Aclonica',
             fontSize: 14,
             color: isPledged ? Colors.white : Colors.black54,
           ),
         ),
+
         trailing: IconButton(
           icon: Image.asset(
             'assets/icons/Hand_Icon.png',

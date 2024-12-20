@@ -70,10 +70,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Function to update the display name in Firebase
   Future<void> _saveDisplayName() async {
     try {
+      print("Before");
       if (_nameController.text.isNotEmpty && currentUser != null) {
+        print("Before");
         await userController.setName(currentUser!.uid,_nameController.text);
-
+        print("Middle");
         UserModel? updatedUser = await userController.getCurrentUser();
+        print("After");
 
         setState(() {
           currentUser = updatedUser;

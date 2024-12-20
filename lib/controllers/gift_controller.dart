@@ -91,6 +91,7 @@ class GiftController {
             'price': gift.price,
             'isPledged': gift.isPledged,
             'description': gift.description,
+            'localId': gift.id
           });
           print('Gift updated successfully');
         } else {
@@ -108,6 +109,7 @@ class GiftController {
           'price': gift.price,
           'isPledged': gift.isPledged,
           'description': gift.description,
+          'localId': gift.id
         });
         print('Gift added successfully');
       }
@@ -219,7 +221,6 @@ class GiftController {
   }
 
 
-
   Future<String> unpledgeGift(String eventId, String? giftId, String giftTitle) async {
     try {
       UserModel? currentUser = await _userController.getCurrentUser();
@@ -299,4 +300,108 @@ class GiftController {
   }
 
 
+  Future<List<Gift>> getGiftsPledgedByMe() async {
+    try {
+      // Get the current user
+      UserModel? currentUser = await _userController.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception("Error: User is not logged in or connection error.");
+      }
+      String userId = currentUser.uid;
+
+      // Reference to the Firestore collection for events
+      final eventsCollection = FirebaseFirestore.instance.collection('events');
+
+      // Query all events to find gifts pledged by the user
+      QuerySnapshot eventsSnapshot = await eventsCollection.get();
+      if (eventsSnapshot.docs.isEmpty) {
+        print("No Events Found");
+        return []; // No events found
+      }
+
+      List<Gift> pledgedGifts = [];
+
+      // Iterate through each event
+      for (var eventDoc in eventsSnapshot.docs) {
+        final giftsCollection = eventDoc.reference.collection('gifts');
+        QuerySnapshot giftsSnapshot = await giftsCollection
+            .where('pledgedBy', isEqualTo: userId)
+            .get();
+        for (var giftDoc in giftsSnapshot.docs) {
+          final data = giftDoc.data() as Map<String, dynamic>;
+          pledgedGifts.add(
+            Gift(
+              firebaseId: giftDoc.id,
+              title: data['title'],
+              category: data['category'],
+              price: data['price'],
+              description: data['description'],
+              isPledged: data['isPledged'] ?? false,
+              eventId: 0,
+              eventFirebaseId: eventDoc.id
+            ),
+          );
+        }
+      }
+      return pledgedGifts;
+    } catch (e) {
+      print("Error fetching gifts pledged by me: ${e.toString()}");
+      return [];
+    }
+  }
+
+  Future<List<Gift>> getGiftsPledgedForMe() async {
+    try {
+      print("Entered the function");
+      // Get the current user
+      UserModel? currentUser = await _userController.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception("Error: User is not logged in or connection error.");
+      }
+      String userId = currentUser.uid;
+
+      // Reference to the Firestore collection for events
+      final eventsCollection = FirebaseFirestore.instance.collection('events');
+
+      // Query all events created by the current user
+      QuerySnapshot eventsSnapshot = await eventsCollection
+          .where('createdBy', isEqualTo: userId)
+          .get();
+
+      if (eventsSnapshot.docs.isEmpty) {
+        return []; // No events found
+      }
+
+      List<Gift> pledgedGiftsForMe = [];
+
+      // Iterate through each event
+      for (var eventDoc in eventsSnapshot.docs) {
+        final giftsCollection = eventDoc.reference.collection('gifts');
+        QuerySnapshot giftsSnapshot = await giftsCollection
+            .where('isPledged', isEqualTo: true)
+            .get();
+
+        for (var giftDoc in giftsSnapshot.docs) {
+          final data = giftDoc.data() as Map<String, dynamic>;
+          pledgedGiftsForMe.add(
+            Gift(
+              firebaseId: giftDoc.id,
+              title: data['title'],
+              category: data['category'],
+              price: data['price'],
+              description: data['description'],
+              isPledged: data['isPledged'] ?? false,
+              eventId: 0,
+              eventFirebaseId: eventDoc.id
+            ),
+          );
+        }
+      }
+
+      return pledgedGiftsForMe;
+    } catch (e) {
+      print("Error fetching gifts pledged for me: ${e.toString()}");
+      return [];
+    }
+  }
 }

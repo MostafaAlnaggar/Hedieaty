@@ -8,6 +8,7 @@ import 'package:mobile_lab_3/screens/friend_profile_screen.dart';
 import 'package:mobile_lab_3/screens/gift_details.dart';
 import 'package:mobile_lab_3/screens/gifts_screen.dart';
 import 'package:mobile_lab_3/screens/home_screen.dart';
+import 'package:mobile_lab_3/screens/pledged_gifts.dart';
 import 'package:mobile_lab_3/screens/profile_screen.dart';
 import 'package:mobile_lab_3/screens/signup_screen.dart';
 import 'package:mobile_lab_3/services/notification_service.dart';
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
         '/friend': (context) => FriendProfileScreen(),
         '/gift_details': (context) => GiftDetailsScreen(),
         '/create_gift': (context) => CreateGiftScreen(),
+        '/pledged_gifts': (context) => PledgedGiftsScreen(),
       },
     );
   }
