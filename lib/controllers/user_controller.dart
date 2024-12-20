@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -112,8 +111,6 @@ class UserController {
 
 
   Future<bool> setName(String uid,String name) async{
-    print("Controller");
-
     return _dao.setName(uid, name);
   }
 
@@ -130,7 +127,6 @@ class UserController {
     final currentUser = await getCurrentUser();
 
     if (currentUser == null) {
-      print("No current user found.");
       return "No current user found.";
     }
 
@@ -161,14 +157,11 @@ class UserController {
           'created_at': FieldValue.serverTimestamp(),
         });
 
-        print("Friendship added successfully!");
         return "Friendship added successfully!";
       } else {
-        print("Friendship already exists!");
         return "Friendship already exists!";
       }
     } else {
-      print("No user found with this phone number.");
       return "No user found with this phone number.";
     }
   }
@@ -181,7 +174,6 @@ class UserController {
     final currentUser = await getCurrentUser();
 
     if (currentUser == null) {
-      print("No current user found.");
       return [];
     }
 
@@ -293,6 +285,57 @@ class UserController {
     } catch (e) {
       print("Error fetching user: ${e.toString()}");
       throw Exception("Failed to fetch user: $e"); // Throw exception for better error handling
+    }
+  }
+
+  Future<String?> getEventOwnerByGiftId(String giftId) async {
+    try {
+      // Reference the 'events' collection
+      QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await FirebaseFirestore.instance
+          .collection('events')
+          .get();
+
+      for (var eventDoc in eventsSnapshot.docs) {
+        // Reference the 'gifts' collection inside the event
+        CollectionReference<Map<String, dynamic>> giftsCollection =
+        eventDoc.reference.collection('gifts');
+
+        // Check if the gift document with the given ID exists
+        DocumentSnapshot<Map<String, dynamic>> giftDoc = await giftsCollection.doc(giftId).get();
+        if (giftDoc.exists) {
+          // Return the 'createdBy' field from the event document
+          String? createdBy = eventDoc.data()['createdBy'];
+          return createdBy;
+        }
+      }
+
+      print('No event found containing giftId: $giftId');
+      return null;
+    } catch (e) {
+      print('Error fetching event owner: $e');
+      return null;
+    }
+  }
+
+  Future<String?> getUserTokenByUserId(String userId) async {
+    try {
+      // Reference the 'users' collection
+      DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        // Get the 'token' field from the document
+        String? token = userDoc.data()?['fcmToken'];
+        return token;
+      } else {
+        print('User with ID $userId does not exist');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user token: $e');
+      return null;
     }
   }
 

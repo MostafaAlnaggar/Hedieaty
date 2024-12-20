@@ -4,6 +4,7 @@ import 'package:mobile_lab_3/database/event_dao.dart';
 import 'package:mobile_lab_3/models/event.dart';
 
 class EventController {
+  final GiftController _giftController = GiftController();
   final EventDAO _dao = EventDAO();
 
   // Fetch all events
@@ -39,7 +40,6 @@ class EventController {
     try {
       // Firestore instance
       FirebaseFirestore db = FirebaseFirestore.instance;
-      GiftController giftController = GiftController();
       // Fetch all local events
       List<Event> localEvents = await getAllEvents();
       // Fetch Firebase events
@@ -49,7 +49,7 @@ class EventController {
       int count = 0;
 
       for (Event event in localEvents) {
-        if(await _publishSingleEvent(event=event,uid=uid,eventsRef=eventsRef,giftController=giftController)){
+        if(await _publishSingleEvent(event=event,uid=uid,eventsRef=eventsRef)){
           count++;
         }
       }
@@ -63,7 +63,7 @@ class EventController {
   }
 
 
-  Future<bool> _publishSingleEvent(Event event, String uid, CollectionReference eventsRef,GiftController giftController ) async{
+  Future<bool> _publishSingleEvent(Event event, String uid, CollectionReference eventsRef) async{
     String uniqueId = '${uid}_${event.id}'; // Create composite ID
     DocumentSnapshot existingEventDoc = await eventsRef.doc(uniqueId).get();
     bool returnValue = false;
@@ -90,7 +90,7 @@ class EventController {
         returnValue = true;
         print('Event updated successfully');
       }
-      giftController.publishGiftsOnFirebase(uniqueId);
+      _giftController.publishGiftsOnFirebase(uniqueId);
     } else {
       // If event doesn't exist, create a new one
       await eventsRef.doc(uniqueId).set({
@@ -99,7 +99,7 @@ class EventController {
         'date': event.date,
         'createdBy': uid,
       });
-      giftController.publishGiftsOnFirebase(uniqueId);
+      _giftController.publishGiftsOnFirebase(uniqueId);
       returnValue = true;
       print('Event added successfully');
     }

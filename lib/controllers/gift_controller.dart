@@ -7,6 +7,7 @@ import 'package:mobile_lab_3/services/notification_service.dart';
 import '../models/user.dart';
 
 class GiftController {
+  final UserController _userController = UserController();
   final GiftDAO _dao = GiftDAO();
 
   // Get all gifts
@@ -145,8 +146,7 @@ class GiftController {
 
   Future<String> pledgeGift(String eventId, String? giftId, String giftTitle) async {
     try {
-      UserController userController = UserController();
-      UserModel? currentUser = await userController.getCurrentUser();
+      UserModel? currentUser = await _userController.getCurrentUser();
       String userId = "";
       String userName = "";
       if(currentUser != null){
@@ -192,13 +192,13 @@ class GiftController {
       });
 
       // Fetch the event owner
-      String? eventOwnerId = await getEventOwnerByGiftId(giftId!);
+      String? eventOwnerId = await _userController.getEventOwnerByGiftId(giftId!);
       if (eventOwnerId == null) {
         return "Error: Unable to fetch event owner.";
       }
 
       // Fetch the event owner's FCM token
-      String? recipientToken = await getUserTokenByUserId(eventOwnerId);
+      String? recipientToken = await _userController.getUserTokenByUserId(eventOwnerId);
       if (recipientToken == null) {
         return "Error: Unable to fetch recipient's FCM token.";
       }
@@ -222,8 +222,7 @@ class GiftController {
 
   Future<String> unpledgeGift(String eventId, String? giftId, String giftTitle) async {
     try {
-      UserController userController = UserController();
-      UserModel? currentUser = await userController.getCurrentUser();
+      UserModel? currentUser = await _userController.getCurrentUser();
       String userId = "";
       String userName = ""; // Assuming UserModel has a `name` field
       if (currentUser != null) {
@@ -273,13 +272,13 @@ class GiftController {
       });
 
       // Fetch the event owner
-      String? eventOwnerId = await getEventOwnerByGiftId(giftId!);
+      String? eventOwnerId = await _userController.getEventOwnerByGiftId(giftId!);
       if (eventOwnerId == null) {
         return "Error: Unable to fetch event owner.";
       }
 
       // Fetch the event owner's FCM token
-      String? recipientToken = await getUserTokenByUserId(eventOwnerId);
+      String? recipientToken = await _userController.getUserTokenByUserId(eventOwnerId);
       if (recipientToken == null) {
         return "Error: Unable to fetch recipient's FCM token.";
       }
@@ -298,58 +297,6 @@ class GiftController {
       return "Error: ${e.toString()}";
     }
   }
-
-  Future<String?> getEventOwnerByGiftId(String giftId) async {
-    try {
-      // Reference the 'events' collection
-      QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await FirebaseFirestore.instance
-          .collection('events')
-          .get();
-
-      for (var eventDoc in eventsSnapshot.docs) {
-        // Reference the 'gifts' collection inside the event
-        CollectionReference<Map<String, dynamic>> giftsCollection =
-        eventDoc.reference.collection('gifts');
-
-        // Check if the gift document with the given ID exists
-        DocumentSnapshot<Map<String, dynamic>> giftDoc = await giftsCollection.doc(giftId).get();
-        if (giftDoc.exists) {
-          // Return the 'createdBy' field from the event document
-          String? createdBy = eventDoc.data()['createdBy'];
-          return createdBy;
-        }
-      }
-
-      print('No event found containing giftId: $giftId');
-      return null;
-    } catch (e) {
-      print('Error fetching event owner: $e');
-      return null;
-    }
-  }
-
-  Future<String?> getUserTokenByUserId(String userId) async {
-    try {
-      // Reference the 'users' collection
-      DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-
-      if (userDoc.exists) {
-        // Get the 'token' field from the document
-        String? token = userDoc.data()?['fcmToken'];
-        return token;
-      } else {
-        print('User with ID $userId does not exist');
-        return null;
-      }
-    } catch (e) {
-      print('Error fetching user token: $e');
-      return null;
-    }
-  }
-
 
 
 }
