@@ -184,5 +184,47 @@ class GiftDAO {
   }
 
 
+  Future<Gift?> getById(int id) async {
+    final db = await dbHelper.database;
+
+    // Query the local database for the gift with the specified ID
+    final localGift = await db.query(
+      'gifts',
+      where: 'id = ?', // Filter by the ID
+      whereArgs: [id], // Pass the ID as an argument
+      limit: 1, // Ensure only one result is returned
+    );
+
+    if (localGift.isEmpty) {
+      // If no gift is found locally, return null
+      return null;
+    }
+
+    // Map the result to a Gift object
+    Gift gift = Gift.fromMap(localGift.first);
+
+    // Fetch the corresponding gift from Firebase
+    final firebaseGift = await _fetchGiftFromFirebase(id);
+
+    if (firebaseGift != null) {
+      // Compare and update the `isPledged` status if they differ
+      if (firebaseGift['isPledged'] != gift.isPledged) {
+        // Update the local database
+        await db.update(
+          'gifts',
+          {'isPledged': firebaseGift['isPledged']},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+
+        // Update the in-memory gift object
+        gift.isPledged = firebaseGift['isPledged'];
+      }
+    }
+
+    return gift;
+  }
+
+
 }
 

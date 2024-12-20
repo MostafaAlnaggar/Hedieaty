@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_lab_3/controllers/gift_controller.dart';
+import 'package:mobile_lab_3/controllers/user_controller.dart';
 import 'package:mobile_lab_3/database/event_dao.dart';
 import 'package:mobile_lab_3/models/event.dart';
 
+import '../models/user.dart';
+
 class EventController {
   final GiftController _giftController = GiftController();
+  final UserController _userController = UserController();
   final EventDAO _dao = EventDAO();
 
   // Fetch all events
@@ -20,11 +24,15 @@ class EventController {
   // Update an existing event
   Future<void> updateEvent(Event event) async {
     await _dao.update(event);
+    UserModel? currentUser = await _userController.getCurrentUser();
+    await publishEventsToFirebase(currentUser!.uid);
   }
 
   // Delete an event by its ID
   Future<void> deleteEvent(int id) async {
     await _dao.delete(id);
+    UserModel? currentUser = await _userController.getCurrentUser();
+    await publishEventsToFirebase(currentUser!.uid);
   }
 
   // Get the first 'n' events, sorted by date
@@ -134,6 +142,20 @@ class EventController {
     } catch (e) {
       print("Error fetching events for user $userId: ${e.toString()}");
       return []; // Return an empty list in case of error
+    }
+  }
+
+  Future<bool> _checkEventExistsInFirebase(String eventFirebaseId) async {
+    try {
+      final eventDoc = await FirebaseFirestore.instance
+          .collection('events')
+          .doc(eventFirebaseId)
+          .get();
+
+      return eventDoc.exists;
+    } catch (e) {
+      print("Error checking if event exists: $e");
+      return false;
     }
   }
 

@@ -15,20 +15,147 @@ class GiftController {
     return await _dao.readAll();
   }
 
-  // Add a new gift
   Future<void> addGift(Gift gift) async {
-    await _dao.create(gift);
+    try {
+      // Add the gift to the local database and get the generated ID
+      int generatedId = await _dao.create(gift);
+
+      // Update the `id` in the gift object
+      gift.id = generatedId;
+
+      // Get the current user
+      UserModel? currentUser = await _userController.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception("Error: No logged-in user found.");
+      }
+
+      // Construct the Firebase event ID
+      String eventFirebaseId = '${currentUser.uid}_${gift.eventId}';
+
+      // Check if the event exists in Firebase
+      bool eventExists = await _checkEventExistsInFirebase(eventFirebaseId);
+
+      if (eventExists) {
+        // If the event exists, add the gift to the event in Firebase
+        await _addGiftToEventInFirebase(eventFirebaseId, gift);
+      } else {
+        // Handle the case where the event does not exist
+        print("Event with ID $eventFirebaseId does not exist in Firebase.");
+      }
+    } catch (e) {
+      print("Error adding gift: $e");
+    }
   }
+
+  Future<bool> _checkEventExistsInFirebase(String eventFirebaseId) async {
+    try {
+      final eventDoc = await FirebaseFirestore.instance
+          .collection('events')
+          .doc(eventFirebaseId)
+          .get();
+
+      return eventDoc.exists;
+    } catch (e) {
+      print("Error checking if event exists: $e");
+      return false;
+    }
+  }
+
 
   // Update an existing gift
   Future<void> updateGift(Gift gift) async {
+    try{
     await _dao.update(gift);
+    // Get the current user
+    UserModel? currentUser = await _userController.getCurrentUser();
+    if (currentUser == null) {
+      throw Exception("Error: No logged-in user found.");
+    }
+
+    // Construct the Firebase event ID
+    String eventFirebaseId = '${currentUser.uid}_${gift.eventId}';
+
+    // Check if the event exists in Firebase
+    bool eventExists = await _checkEventExistsInFirebase(eventFirebaseId);
+
+    if (eventExists) {
+      // If the event exists, add the gift to the event in Firebase
+      await _addGiftToEventInFirebase(eventFirebaseId, gift);
+    } else {
+      // Handle the case where the event does not exist
+      print("Event with ID $eventFirebaseId does not exist in Firebase.");
+    }
+    } catch (e) {
+      print("Error adding gift: $e");
+    }
   }
 
   // Delete a gift by its ID
+// Delete a gift by its ID
   Future<void> deleteGift(int id) async {
-    await _dao.delete(id);
+    try {
+      // Fetch the gift details from the local database
+      Gift? gift = await _dao.getById(id);
+
+      if (gift == null) {
+        print("Gift with ID $id does not exist in the local database.");
+        return;
+      }
+
+      // Get the current user
+      UserModel? currentUser = await _userController.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception("Error: No logged-in user found.");
+      }
+
+      // Construct the Firebase event ID
+      String eventFirebaseId = '${currentUser.uid}_${gift.eventId}';
+
+      // Check if the event exists in Firebase
+      bool eventExists = await _checkEventExistsInFirebase(eventFirebaseId);
+
+      if (eventExists) {
+        // Delete the gift from the event in Firebase
+        await _deleteGiftFromEventInFirebase(eventFirebaseId, gift);
+      } else {
+        print("Event with ID $eventFirebaseId does not exist in Firebase.");
+      }
+
+      // Delete the gift locally
+      await _dao.delete(id);
+
+      print("Gift with ID $id deleted successfully.");
+    } catch (e) {
+      print("Error deleting gift: $e");
+    }
   }
+
+// Helper function to delete a gift from Firebase
+  Future<void> _deleteGiftFromEventInFirebase(String eventFirebaseId, Gift gift) async {
+    try {
+      // Reference the Firebase event's gifts collection
+      final giftsCollection = FirebaseFirestore.instance
+          .collection('events')
+          .doc(eventFirebaseId)
+          .collection('gifts');
+
+      // Query the gift by its localId
+      QuerySnapshot giftSnapshot = await giftsCollection
+          .where('localId', isEqualTo: gift.id)
+          .get();
+
+      if (giftSnapshot.docs.isNotEmpty) {
+        // Delete the gift document
+        await giftSnapshot.docs.first.reference.delete();
+        print("Gift with localId ${gift.id} deleted from Firebase.");
+      } else {
+        print("Gift with localId ${gift.id} does not exist in Firebase.");
+      }
+    } catch (e) {
+      print("Error deleting gift from Firebase: $e");
+    }
+  }
+
 
   // Get the first 'n' gifts
   Future<List<Gift>> getFirstGifts(int limit) async {
