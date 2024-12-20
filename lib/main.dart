@@ -13,6 +13,7 @@ import 'package:mobile_lab_3/screens/signup_screen.dart';
 import 'package:mobile_lab_3/services/notification_service.dart';
 import 'Screens/login_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Login/Sign-Up',
       initialRoute: initialRoute, // Set initial route based on login status
       routes: {

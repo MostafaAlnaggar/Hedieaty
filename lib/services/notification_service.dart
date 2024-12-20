@@ -2,10 +2,14 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:mobile_lab_3/controllers/user_controller.dart';
+
+import '../main.dart';
 
 Future<void> saveTokenToFirebase(String token) async {
   try {
@@ -49,9 +53,26 @@ class NotificationService {
       // Save the token to Firebase
       await saveTokenToFirebase(token);
     }
-    // Listen to messages while the app is in foreground
+
+    // // Listen to messages while the app is in foreground
+    // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    //   print("Message received: ${message.notification?.title}");
+    // });
+
+    // Handle messages when the app is in the foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("Message received: ${message.notification?.title}");
+      if (message.notification != null) {
+        // Use navigatorKey to show the dialog
+        showToastNotification(
+          title: message.notification!.title ?? 'No title',
+          body: message.notification!.body ?? 'No body',
+        );
+      }
+
+      // final context = navigatorKey.currentContext;
+      // if (context != null) {
+      //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("This is a snack bar")));
+      // }
     });
 
     // Handle messages when the app is opened from a notification
@@ -117,5 +138,55 @@ class NotificationService {
     } catch (e) {
       print('Error sending notification: $e');
     }
+  }
+}
+void showToastNotification({required String title, required String body}) {
+  final navigatorState = navigatorKey.currentState;
+
+  if (navigatorState != null) {
+    final overlay = navigatorState.overlay;
+
+    if (overlay != null) {
+      final overlayEntry = OverlayEntry(
+        builder: (context) {
+          return Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                color: Color(0xFFDB2367).withOpacity(0.9),
+                padding: EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      body,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      // Insert the overlay entry to display the notification
+      overlay.insert(overlayEntry);
+
+      // Remove the overlay entry after 3 seconds
+      Future.delayed(Duration(seconds: 3), () {
+        overlayEntry.remove();
+      });
+    }
+  } else {
+    print('Navigator state is null. Cannot show custom notification.');
   }
 }
